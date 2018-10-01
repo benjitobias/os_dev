@@ -1,40 +1,30 @@
-mov ah, 0x0e ; tty mode
+[org 0x7c00] ; auto calculate offset
 
-mov bp, 0x8000 ; far away from 0x7c00 so that we won't get overwritten
-mov sp, bp ; empty stack - sp = bp
+; prepare params and then call functions
+mov bx, HELLO
+call print
+call print_nl
 
-push 'A'
-push 'B'
-push 'C'
+mov bx, GOODBYE
+call print
+call print_nl
 
-; show the stack grows downwards
-mov al, [0x7ffe] ; 0x8000 - 2
-int 0x10
+mov dx, "A"
+call print_hex
 
-; however, don't try to access [0x8000] now because it won't work
-; you can only access the stack top so, ath this point, only 0z7ffe
-mov al, [0x8000]
-int 0x10
-
-; recover characters using 'pop'
-; we can only pop full words to we need a register to manipulate the lower byte
-pop bx
-mov al, bl
-int 0x10 ; print "C"
-
-pop bx
-mov al, bl
-int 0x10 ; print "B"
-
-pop bx
-mov al, bl
-int 0x10 ; print "A"
-
-; data pop's is garbage now
-mov al, [0x8000]
-int 0x10
 
 jmp $ ; jump to current address (infinite loop)
+
+; include subroutines
+%include "boot_sect_print.asm"
+%include "boot_sect_print_hex.asm"
+
+; data
+HELLO:
+	db 'Hello, World', 0
+
+GOODBYE:
+	db 'Goodbye', 0
 
 
 ; padding and magic number indicating boot sector
